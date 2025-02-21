@@ -1,0 +1,202 @@
+<!-- Month Dropdown -->
+<div class="text-center mb-4">
+  <div class="dropdown">
+    <button class="btn" type="button" id="monthDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #890440; color: white;">
+      <%= Date::MONTHNAMES[@month] %> <i class="fas fa-caret-down"></i>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="monthDropdown">
+      <% Date::MONTHNAMES.compact.each_with_index do |month, index| %>
+        <li>
+          <%= link_to month, expenses_path(month: index + 1), class: 'dropdown-item d-flex align-items-center' %>
+          <span class="category-indicator" style="background-color: <%= @category_colors[month] || '#D3D3D3' %>;"></span>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>
+
+<!-- Circular Chart -->
+<div class="position-relative mb-4" style="width: 280px; height: 280px; margin: 0 auto;">
+  <canvas id="expensesChart"></canvas>
+  <div class="position-absolute top-50 start-50 translate-middle text-center" style="margin-top: 40px;">
+    <strong class="h5">RM <span id="totalSpent"><%= number_to_currency(@total_spent || 0, unit: '', precision: 2) %></span></strong><br>
+    <small class="text-muted">Budget Left: RM <span id="budgetLeft">
+      <%= number_to_currency((current_user.monthly_budget || 0) - (@total_spent || 0), unit: '', precision: 2) %>
+    </span></small>
+  </div>
+</div>
+
+<!-- Set Monthly Budget Button -->
+<div class="text-center mt-3">
+  <button class="btn btn-sm px-3 py-2 text-white" data-bs-toggle="modal" data-bs-target="#budgetModal" 
+    style="background-color: #890440;">
+    Set Monthly Budget
+  </button>
+</div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="budgetModal" tabindex="-1" aria-labelledby="budgetModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header text-white" style="background-color: #890440;">
+        <h5 class="modal-title" id="budgetModalLabel">Set Monthly Budget</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form id="budgetForm">
+          <div class="mb-3">
+            <label for="budgetAmount" class="form-label">Enter Budget (RM)</label>
+            <input type="number" class="form-control" id="budgetAmount" min="0" required>
+          </div>
+          <div class="mb-3">
+            <p class="text-muted">Remaining Budget: RM <span id="remainingBudget">
+              <%= number_to_currency((current_user.monthly_budget || 0) - (@total_spent || 0), unit: '', precision: 2) %>
+            </span></p>
+          </div>
+          <button type="submit" class="btn w-100 text-white" style="background-color: #890440;">Save Budget</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Expenses List -->
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-header text-white text-center" style="background-color: #890440;">
+    <h4 class="mb-0">Your Expenses</h4>
+  </div>
+  <div class="card-body">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Item</th>
+          <th class="price-column">Price</th>
+          <th>Category</th>
+          <th></th> <!-- Empty Column Title -->
+        </tr>
+      </thead>
+      <tbody>
+        <% @expenses.each do |expense| %>
+          <tr>
+            <td><%= expense.date.strftime('%d %b %Y') %></td> <!-- Date -->
+            <td><%= expense.name %></td> <!-- Item -->
+            <td class="price-column">RM <%= number_to_currency(expense.price, unit: '', precision: 2) %></td> <!-- Price -->
+            <td>
+              <span class="category-icon">
+                <!-- Display the icon next to the category name -->
+                <%= case expense.category.name
+                when 'Food'
+                  '<i class="fa-solid fa-utensils"></i>'.html_safe
+                when 'Utilities'
+                  '<i class="fa-solid fa-plug"></i>'.html_safe
+                when 'Transportation'
+                  '<i class="fa-solid fa-train"></i>'.html_safe  
+                when 'Entertainment'
+                  '<i class="fa-solid fa-film"></i>'.html_safe
+                when 'Other'
+                  '<i class="fa-solid fa-ellipsis-h"></i>'.html_safe
+                else
+                  ''.html_safe
+                end %>
+           
+              </span>
+              </td> <!-- Category -->
+              <td>
+                <div class="btn-group" role="group">
+                  <%= link_to edit_expense_path(expense), class: 'btn btn-sm btn-outline-warning' do %>
+                    <i class="fas fa-edit"></i>
+                  <% end %>
+                  
+                  <%= link_to 'Delete', expense_path(expense), method: :delete, 
+                        data: { turbo: false, confirm: 'Are you sure you want to delete this expense?' }, 
+                        class: 'btn btn-sm btn-outline-danger' %>
+                </div>
+              </td>
+              
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Expense Button -->
+<div class="text-center mt-4">
+  <%= link_to 'Add New Expense', new_expense_path, class: 'btn px-4 py-2', style: 'background-color: #890440; color: white;' %>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const ctx = document.getElementById('expensesChart').getContext('2d');
+
+  const categoryColors = <%= @category_colors.to_json.html_safe %>;
+  const labels = <%= @categories_spent.keys.to_json.html_safe %>;
+  const values = <%= @categories_spent.values.to_json.html_safe %>;
+  const totalSpentElement = document.getElementById('totalSpent');
+  const budgetLeftElement = document.getElementById('budgetLeft');
+  const remainingBudgetElement = document.getElementById('remainingBudget');
+  let totalSpent = parseFloat("<%= @total_spent || 0 %>");
+  let monthlyBudget = parseFloat("<%= current_user.monthly_budget || 0 %>");
+
+  const data = {
+    labels: labels,
+    datasets: [{
+      data: values,
+      backgroundColor: labels.map(name => categoryColors[name] || "#D3D3D3"),
+      borderWidth: 2,
+      cutout: '75%',
+      hoverOffset: 8
+    }]
+  };
+
+  const expensesChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(tooltipItem) {
+              const categoryValue = tooltipItem.raw;
+              const percentage = totalSpent > 0
+                ? ((categoryValue / totalSpent) * 100).toFixed(2)
+                : 0;
+              return labels[tooltipItem.dataIndex] + ": " + percentage + "%";
+            }
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById('budgetForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const budgetInput = document.getElementById('budgetAmount');
+    const newBudget = parseFloat(budgetInput.value) || 0;
+
+    if (newBudget >= 0) {
+      monthlyBudget = newBudget;
+      const budgetLeft = (monthlyBudget - totalSpent).toFixed(2);
+      budgetLeftElement.textContent = budgetLeft;
+      remainingBudgetElement.textContent = budgetLeft;
+
+      fetch('<%= update_budget_path %>', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ monthly_budget: newBudget })
+      });
+
+      var modal = bootstrap.Modal.getInstance(document.getElementById('budgetModal'));
+      modal.hide();
+    }
+  });
+});
+</script>
