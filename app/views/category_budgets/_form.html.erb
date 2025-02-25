@@ -1,0 +1,25 @@
+<%= form_with(model: [@category, @category_budget], local: true) do |form| %>
+    <% if @category_budget.errors.any? %>
+      <div class="alert alert-danger">
+        <h4><%= pluralize(@category_budget.errors.count, "error") %> prohibited this category budget from being saved:</h4>
+        <ul>
+          <% @category_budget.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    
+    <div class="form-group">
+      <%= form.label :budget, 'Set Budget' %>
+      <%= form.number_field :budget, class: 'form-control', step: '0.01', value: @category_budget.budget || 0.0 %>
+    </div>
+    
+    <!-- Ensure the hidden field sends an integer month value -->
+    <%= form.hidden_field :month, value: (params[:month].present? ? params[:month].to_i : (@category_budget.month || Date.today.month)) %>
+    
+    <div class="form-group">
+      <%= form.submit 'Save', class: 'btn btn-primary' %>
+    </div>
+  <% end %>
+  

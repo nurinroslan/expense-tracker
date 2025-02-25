@@ -1,0 +1,2 @@
+module CategoryBudgetsHelper
+end

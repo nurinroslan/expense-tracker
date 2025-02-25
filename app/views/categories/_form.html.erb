@@ -1,27 +1,24 @@
-<%= form_with(model: category, local: true) do |form| %>
-    <% if category.errors.any? %>
-      <div class="alert alert-danger">
-        <h4><%= pluralize(category.errors.count, "error") %> prohibited this category from being saved:</h4>
-        <ul>
-          <% category.errors.full_messages.each do |message| %>
-            <li><%= message %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
-  
-    <div class="form-group">
-      <%= form.label :name %>
-      <%= form.text_field :name, class: 'form-control' %>
-    </div>
-  
-    <div class="form-group">
-      <%= form.label :budget, 'Set Budget' %>
-      <%= form.number_field :budget, class: 'form-control', step: '0.01', value: category.budget || 0.0 %>
-    </div>
-  
-    <div class="form-group">
-      <%= form.submit 'Save', class: 'btn btn-primary' %>
+<%= form_with(model: [@category, @category_budget], local: true) do |form| %>
+  <% if @category_budget.errors.any? %>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(@category_budget.errors.count, "error") %> prohibited this category budget from being saved:</h4>
+      <ul>
+        <% @category_budget.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
     </div>
   <% end %>
   
+  <div class="form-group">
+    <%= form.label :budget, 'Set Budget' %>
+    <%= form.number_field :budget, class: 'form-control', step: '0.01', value: @category_budget.budget || 0.0 %>
+  </div>
+  
+  <%# Include a hidden field for the month so the budget applies only to that month %>
+  <%= form.hidden_field :month, value: params[:month] || @category_budget.month || Date.today.month %>
+  
+  <div class="form-group">
+    <%= form.submit 'Save', class: 'btn btn-primary' %>
+  </div>
+<% end %>

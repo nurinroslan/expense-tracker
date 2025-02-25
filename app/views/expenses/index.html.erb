@@ -21,7 +21,7 @@
   <div class="position-absolute top-50 start-50 translate-middle text-center" style="margin-top: 40px;">
     <strong class="h5">RM <span id="totalSpent"><%= number_to_currency(@total_spent || 0, unit: '', precision: 2) %></span></strong><br>
     <small class="text-muted">Budget Left: RM <span id="budgetLeft">
-      <%= number_to_currency((current_user.monthly_budget || 0) - (@total_spent || 0), unit: '', precision: 2) %>
+      <%= number_to_currency((@monthly_budget || 0) - (@total_spent || 0), unit: '', precision: 2) %>
     </span></small>
   </div>
 </div>
@@ -52,9 +52,9 @@
             <input type="number" class="form-control" id="budgetAmount" min="0" required>
           </div>
           <div class="mb-3">
-            <p class="text-muted">Remaining Budget: RM <span id="remainingBudget">
-              <%= number_to_currency((current_user.monthly_budget || 0) - (@total_spent || 0), unit: '', precision: 2) %>
-            </span></p>
+          <p class="text-muted">Remaining Budget: RM <span id="remainingBudget">
+            <%= number_to_currency((@monthly_budget || 0) - (@total_spent || 0), unit: '', precision: 2) %>
+          </span></p>
           </div>
           <button type="submit" class="btn w-100 text-white" style="background-color: #890440;">Save Budget</button>
         </form>
@@ -82,41 +82,38 @@
       <tbody>
         <% @expenses.each do |expense| %>
           <tr>
-            <td><%= expense.date.strftime('%d %b %Y') %></td> <!-- Date -->
-            <td><%= expense.name %></td> <!-- Item -->
-            <td class="price-column">RM <%= number_to_currency(expense.price, unit: '', precision: 2) %></td> <!-- Price -->
+            <td><%= expense.date.strftime('%d %b %Y') %></td>
+            <td><%= expense.name %></td>
+            <td class="price-column">RM <%= number_to_currency(expense.price, unit: '', precision: 2) %></td>
             <td>
               <span class="category-icon">
-                <!-- Display the icon next to the category name -->
                 <%= case expense.category.name
-                when 'Food'
-                  '<i class="fa-solid fa-utensils"></i>'.html_safe
-                when 'Utilities'
-                  '<i class="fa-solid fa-plug"></i>'.html_safe
-                when 'Transportation'
-                  '<i class="fa-solid fa-train"></i>'.html_safe  
-                when 'Entertainment'
-                  '<i class="fa-solid fa-film"></i>'.html_safe
-                when 'Other'
-                  '<i class="fa-solid fa-ellipsis-h"></i>'.html_safe
-                else
-                  ''.html_safe
+                  when 'Food'
+                    '<i class="fa-solid fa-utensils"></i>'.html_safe
+                  when 'Utilities'
+                    '<i class="fa-solid fa-plug"></i>'.html_safe
+                  when 'Transportation'
+                    '<i class="fa-solid fa-bus"></i>'.html_safe  
+                  when 'Entertainment'
+                    '<i class="fa-solid fa-film"></i>'.html_safe
+                  when 'Other'
+                    '<i class="fa-solid fa-ellipsis-h"></i>'.html_safe
+                  else
+                    ''.html_safe
                 end %>
-           
               </span>
-              </td> <!-- Category -->
-              <td>
-                <div class="btn-group" role="group">
-                  <%= link_to edit_expense_path(expense), class: 'btn btn-sm btn-outline-warning' do %>
-                    <i class="fas fa-edit"></i>
-                  <% end %>
-                  
-                  <%= link_to 'Delete', expense_path(expense), method: :delete, 
-                        data: { turbo: false, confirm: 'Are you sure you want to delete this expense?' }, 
-                        class: 'btn btn-sm btn-outline-danger' %>
-                </div>
-              </td>
-              
+            </td>
+            <td>
+              <div class="btn-group" role="group">
+                <%= link_to edit_expense_path(expense), class: 'btn btn-sm btn-outline-warning' do %>
+                  <i class="fas fa-edit"></i>
+                <% end %>
+               <%= button_to 'Delete', expense_path(expense),
+                  method: :delete,
+                  data: { confirm: 'Are you sure you want to delete this expense?' },
+                  class: 'btn btn-sm btn-outline-danger' %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>
@@ -126,7 +123,7 @@
 
 <!-- Add Expense Button -->
 <div class="text-center mt-4">
-  <%= link_to 'Add New Expense', new_expense_path, class: 'btn px-4 py-2', style: 'background-color: #890440; color: white;' %>
+  <%= link_to 'Add New Expense', new_expense_path(month: @month), class: 'btn px-4 py-2', style: 'background-color: #890440; color: white;' %>
 </div>
 
 <script>
@@ -140,7 +137,8 @@ document.addEventListener("DOMContentLoaded", function() {
   const budgetLeftElement = document.getElementById('budgetLeft');
   const remainingBudgetElement = document.getElementById('remainingBudget');
   let totalSpent = parseFloat("<%= @total_spent || 0 %>");
-  let monthlyBudget = parseFloat("<%= current_user.monthly_budget || 0 %>");
+  // Use the month-specific budget loaded in @monthly_budget
+  let monthlyBudget = parseFloat("<%= @monthly_budget || 0 %>");
 
   const data = {
     labels: labels,
@@ -175,28 +173,39 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   document.getElementById('budgetForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const budgetInput = document.getElementById('budgetAmount');
-    const newBudget = parseFloat(budgetInput.value) || 0;
+  event.preventDefault();
+  const budgetInput = document.getElementById('budgetAmount');
+  const newBudget = parseFloat(budgetInput.value) || 0;
 
-    if (newBudget >= 0) {
-      monthlyBudget = newBudget;
-      const budgetLeft = (monthlyBudget - totalSpent).toFixed(2);
-      budgetLeftElement.textContent = budgetLeft;
-      remainingBudgetElement.textContent = budgetLeft;
+  if (newBudget >= 0) {
+    monthlyBudget = newBudget;
+    const budgetLeft = (monthlyBudget - totalSpent).toFixed(2);
+    budgetLeftElement.textContent = budgetLeft;
+    remainingBudgetElement.textContent = budgetLeft;
 
-      fetch('<%= update_budget_path %>', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ monthly_budget: newBudget })
-      });
+    // Send the new budget along with the selected month to update only that month's record.
+    fetch('<%= update_budget_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ monthly_budget: newBudget, month: "<%= @month %>" })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log("Budget updated successfully for month <%= @month %>");
+      } else {
+        console.error("Error updating budget:", data.errors);
+      }
+    })
+    .catch(error => console.error("Fetch error:", error));
 
-      var modal = bootstrap.Modal.getInstance(document.getElementById('budgetModal'));
-      modal.hide();
-    }
-  });
+    var modal = bootstrap.Modal.getInstance(document.getElementById('budgetModal'));
+    modal.hide();
+  }
+});
+  
 });
 </script>
