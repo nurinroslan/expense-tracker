@@ -3,9 +3,10 @@ default: &default
   encoding: utf8mb4
   collation: utf8mb4_unicode_ci
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: expensetracker
-  password: "nurin1207"
+  username: expense_user
+  password: "Abc123!@#"
   host: localhost
+  database: expensetracker_production
 
 development:
   <<: *default
@@ -21,4 +22,5 @@ production:
 
 cable:
   adapter: redis
-  url:redis//localhost:6379/1
+  url: redis://localhost:6379/1
+
