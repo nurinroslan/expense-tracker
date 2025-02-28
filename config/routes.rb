@@ -1,6 +1,13 @@
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
   # Devise authentication routes
   devise_for :users
+
+  #Sidekiq Web UI (Restrict to Admin Users)
+  authenticate :user, ->(user) { user.admin? } do
+    mount Sidekiq::Web => "/sidekiq"
+  end
 
   # Resources for your main models
   resources :expenses

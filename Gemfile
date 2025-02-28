@@ -64,4 +64,6 @@ end
 
 gem "devise", "~> 4.9"
 
-gem "sidekiq", "~> 7.3"
+gem "sidekiq"
+
+gem 'sidekiq-scheduler'
