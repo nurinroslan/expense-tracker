@@ -7,8 +7,8 @@ class ExpensesController < ApplicationController
     @month = params[:month].present? ? params[:month].to_i : Date.today.month
     @selected_month = @month
     @expenses = current_user.expenses.includes(:category).where('MONTH(date) = ?', @month)
-    @total_spent = @expenses.sum(:price)
-    @categories_spent = @expenses.group(:category_id).sum(:price)
+    @total_spent = @expenses.sum(:amount)
+    @categories_spent = @expenses.group(:category_id).sum(:amount)
     
     # Load the budget for the selected month; if none exists, default to 0.
     @monthly_budget = current_user.monthly_budgets.find_by(month: @month)&.amount || 0
@@ -90,7 +90,7 @@ class ExpensesController < ApplicationController
   end
 
   def expense_params
-    params.require(:expense).permit(:name, :price, :date, :category_id)
+    params.require(:expense).permit(:name, :amount, :date, :category_id)
   end
 
   def random_color

@@ -29,7 +29,7 @@ class HomeController < ApplicationController
     Expense.where(user: current_user)
            .where("extract(month from date) = ?", month)
            .group(:category)
-           .sum(:price)
+           .sum(:amount)
   rescue StandardError
     {}
   end

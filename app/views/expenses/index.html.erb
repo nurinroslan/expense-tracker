@@ -74,7 +74,7 @@
         <tr>
           <th>Date</th>
           <th>Item</th>
-          <th class="price-column">Price</th>
+          <th class="amount-column">Amount</th>
           <th>Category</th>
           <th></th> <!-- Empty Column Title -->
         </tr>
@@ -84,7 +84,7 @@
           <tr>
             <td><%= expense.date.strftime('%d %b %Y') %></td>
             <td><%= expense.name %></td>
-            <td class="price-column">RM <%= number_to_currency(expense.price, unit: '', precision: 2) %></td>
+            <td class="amount-column">RM <%= number_to_currency(expense.amount, unit: '', precision: 2) %></td>
             <td>
               <span class="category-icon">
                 <%= case expense.category.name

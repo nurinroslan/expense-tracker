@@ -8,7 +8,7 @@ class Category < ApplicationRecord
   end
 
   def total_spent
-    expenses.sum(:price)
+    expenses.sum(:amount)
   end
 
   def budget_status(month = Date.today.month)

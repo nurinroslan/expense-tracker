@@ -1,0 +1,13 @@
+<h1>Monthly Expense Report</h1>
+<p>Hello <%= @user.email %>,</p>
+
+<p>Here is your expense report for the month:</p>
+
+<ul>
+  <% @report_data.each do |category, amount| %>
+    <li><%= category %>: <%= number_to_currency(amount) %></li>
+  <% end %>
+</ul>
+
+<p>Best regards,</p>
+<p>Your Expense Tracker Team</p>

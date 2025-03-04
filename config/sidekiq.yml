@@ -1,0 +1,10 @@
+:concurrency: 5
+:queues:
+  - default
+  - mailers
+  - reports
+:scheduler:
+  :schedule:
+    monthly_report_job:
+      cron: "0 0 1 * *"   # Runs at midnight on the 1st of every month
+      class: "MonthlyReportJob"
