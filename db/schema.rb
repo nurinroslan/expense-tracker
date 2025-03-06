@@ -10,7 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_05_012226) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_06_041727) do
+  create_table "budgets", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "category"
+    t.decimal "amount", precision: 10
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_budgets_on_user_id"
+  end
+
   create_table "categories", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.decimal "budget", precision: 10, scale: 2, default: "0.0"
@@ -79,6 +88,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_05_012226) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  add_foreign_key "budgets", "users"
   add_foreign_key "category_budgets", "categories"
   add_foreign_key "monthly_budgets", "users"
 end

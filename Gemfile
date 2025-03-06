@@ -71,3 +71,5 @@ gem 'sidekiq-scheduler'
 gem "dotenv-rails", "~> 3.1"
 
 gem 'whenever', require: false
+
+gem 'redis', '>= 4.0.1'

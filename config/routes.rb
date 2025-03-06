@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   devise_for :users
 
   #Sidekiq Web UI (Restrict to Admin Users)
-  authenticate :user, ->(user) { user.admin? } do
+  authenticate :user, lambda { |u| u.email == "admin@gmail.com" } do
     mount Sidekiq::Web => "/sidekiq"
   end
 
