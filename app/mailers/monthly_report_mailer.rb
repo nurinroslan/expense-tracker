@@ -1,7 +1,7 @@
 class MonthlyReportMailer < ApplicationMailer
   default from: ENV["GMAIL_USERNAME"] # Ensure this is your actual Gmail
 
-  def send_report(user)
+  def monthly_report(user)
     @user = user
     @report_data = generate_report(user) # Add this to provide data
 

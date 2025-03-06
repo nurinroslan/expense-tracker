@@ -1,9 +1,7 @@
 class MonthlyReportJob < ApplicationJob
-  queue_as :mailers # Change from :reports to :mailers
+  queue_as :default
 
-  def perform
-    User.find_each do |user|
-      MonthlyReportMailer.send_report(user).deliver_later
-    end
+  def perform(*args)
+    # Do something later
   end
 end
